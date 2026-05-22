@@ -1,0 +1,41 @@
+name: Hot Pepper Beauty New Shop Notifier
+
+on:
+  schedule:
+    # 毎日午前9時と午後9時（JST）に実行
+    # UTCで午前0時と午後0時に相当
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+
+jobs:
+  notify-new-shops:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # 全ての履歴を取得しないとコミットできない場合がある
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run main script
+      env:
+        TARGET_URL: ${{ secrets.TARGET_URL }} # GitHub SecretsからURLを取得
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }} # GitHub SecretsからWebhook URLを取得
+      run: python main.py
+
+    - name: Commit and push changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add past_shops.txt
+        git commit -m "Update past_shops.txt with latest shop data" || echo "No changes to commit"
+        git push
+      
