@@ -1,0 +1,27 @@
+name: Hot Pepper Beauty Notifier
+on:
+  schedule:
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: pip install -r requirements.txt
+      - name: Run
+        env:
+          TARGET_URL: ${{ secrets.TARGET_URL }}
+        run: python main.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add past_shops.txt
+          git commit -m "Update past_shops.txt" || echo "No changes to commit"
+          git push
